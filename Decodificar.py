@@ -5,8 +5,8 @@ import subprocess
 from multiprocessing import Process
 
 
-def camelcase(string):
-    return re.sub(r"(_|-|[.]|\s|'|`)+", "_", string).title().replace("_", "")
+def replaceTo(string, rep):
+    return re.sub(r"(_|-|[.]|\s|'|`)+", "_", string).title().replace("_", rep)
 
 
 def write_password(password, new_password_file):
@@ -21,8 +21,8 @@ def apply_all_regex(password, new_password_file):
     all_pass = password + ''
     for i in regex.keys():
         r = re.compile(i, re.IGNORECASE)
-        res = re.sub(r, regex[i], password)
-        all_pass = re.sub(r, regex[i], all_pass)
+        res = password[0] + re.sub(r, regex[i], password[1:])
+        all_pass = all_pass[0] + re.sub(r, regex[i], all_pass[1:])
 
         if res != password:
             new_password_file.write(res + "\n")
@@ -33,7 +33,12 @@ def apply_all_regex(password, new_password_file):
 def transform_password(new_password_file):
     print("init Transform Passwords")
     for password in open('passwords.txt'):
-        password = camelcase(password.replace("\n", ""))
+        password = password.replace("\n", "")
+
+        apply_all_regex(replaceTo(password, "@"), new_password_file)
+        apply_all_regex(replaceTo(password, "!"), new_password_file)
+
+        password = replaceTo(password, "")
         new_password_file.write(password + "\n")
         new_password_file.write(password[0].lower() + password[1:] + "\n")
         apply_all_regex(password, new_password_file)
