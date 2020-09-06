@@ -6,7 +6,8 @@ from multiprocessing import Process
 
 
 def replaceTo(string, rep):
-    return re.sub(r"(_|-|[.]|\s|'|`)+", "_", string).title().replace("_", rep)
+    string = re.sub(r"(_|-|[.]|\s|'|`)+", "_", string).title().replace("_", rep)
+    return string[0].lower() + string[1:]
 
 
 def write_password(password, new_password_file):
@@ -88,8 +89,9 @@ def decript(arq_crito):
 if __name__ == '__main__':
 
     if not os.path.isfile('new_password.txt'):
-        new_password_file = open('new_password.txt', 'a')
+        new_password_file = open('new_password.txt', 'w+')
         transform_password(new_password_file)
+        new_password_file.close()
 
     arquivos = os.listdir(r'arquivos')
     threads = []
