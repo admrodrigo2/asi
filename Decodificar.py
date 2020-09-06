@@ -1,13 +1,12 @@
-import os
-import subprocess
-import re
 import json
+import os
+import re
+import subprocess
 from multiprocessing import Process
 
 
 def camelcase(string):
-    string = re.sub(r"(_|-)+", " ", string).title().replace(" ", "")
-    return string[0].lower() + string[1:]
+    return re.sub(r"(_|-|[.]|\s|'|`)+", "_", string).title().replace("_", "")
 
 
 def write_password(password, new_password_file):
@@ -32,10 +31,13 @@ def apply_all_regex(password, new_password_file):
 
 
 def transform_password(new_password_file):
+    print("init Transform Passwords")
     for password in open('passwords.txt'):
         password = camelcase(password.replace("\n", ""))
         new_password_file.write(password + "\n")
+        new_password_file.write(password[0].lower() + password[1:] + "\n")
         apply_all_regex(password, new_password_file)
+    print("End Transform Passwords")
 
 
 def cmdline(command):
@@ -50,18 +52,17 @@ def decript(arq_crito):
     arquvivo_resultado = 'resultado.txt'
     arquivo_saida = arq_crito.replace(".enc", "") + '-' + arquivo_saida
     encontrar = 'teste'
-    arq_in = 'C:/Users/Rodrigo/Documents/Loto/simpleaes/Arquivos/'
-    arq_out = 'C:/Users/Rodrigo/Documents/Loto/decifrado/'
-
+    arq_in = 'arquivos/'
+    arq_out = 'decifrado/'
+    count = 0
     for password in open(lista_senha):
         senha = password.strip()
-        cmd = "openssl enc -d -aes-256-cbc -pbkdf2 -salt -in " + arq_in + "{} -out " + arq_out +"{} -k {}".format(
-            arq_crito,
-            arquivo_saida,
+        cmd = "openssl enc -d -aes-256-cbc -pbkdf2 -salt -in {} -out {} -k {}".format(
+            arq_in + arq_crito,
+            arq_out + arquivo_saida,
             senha)
-        #print(cmd)
         if b"bad decrypt" not in cmdline(cmd):
-            arquivo1 = open('C:/Users/Rodrigo/Documents/Loto/decifrado/'+arquivo_saida, 'r')
+            arquivo1 = open('decifrado/' + arquivo_saida, 'r')
             arquivo2 = open(arquvivo_resultado, 'a')
             try:
                 conteudo = arquivo1.readline()
@@ -71,20 +72,24 @@ def decript(arq_crito):
                     arquivo2.close()
                     break
             except UnicodeDecodeError:
-                print('Caracter invalido.')
+                pass
             arquivo1.close()
             arquivo2.close()
+        count += 1
+
+    print("file: {} password count: {}".format(arq_crito, count))
 
 
 if __name__ == '__main__':
-    
-    new_password_file = open('new_password.txt', 'a')
-    arquivos = os.listdir(r'C:\Users\Rodrigo\Documents\Loto\simpleaes\Arquivos')
-    transform_password(new_password_file)
+
+    if not os.path.isfile('new_password.txt'):
+        new_password_file = open('new_password.txt', 'a')
+        transform_password(new_password_file)
+
+    arquivos = os.listdir(r'arquivos')
     threads = []
 
     for arq_crito in arquivos:
-        print(arq_crito)
         p = Process(target=decript, args=(arq_crito,))
         p.start()
         threads.append(p)
